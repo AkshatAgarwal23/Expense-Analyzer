@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Expense Analyzer</title>
+  <style>
+    :root {
+      --bg: #0f1419;
+      --panel: #1a222c;
+      --ink: #e8eef4;
+      --muted: #8b9aab;
+      --accent: #2dd4bf;
+      --accent-dim: #115e59;
+      --line: #2a3542;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      background: radial-gradient(ellipse at top, #1a2a32 0%, var(--bg) 55%);
+      color: var(--ink);
+      min-height: 100vh;
+    }
+    header {
+      padding: 1.25rem 1.25rem 0.5rem;
+      max-width: 42rem;
+      margin: 0 auto;
+    }
+    header h1 {
+      margin: 0;
+      font-size: 1.6rem;
+      letter-spacing: -0.02em;
+    }
+    header p { margin: 0.35rem 0 0; color: var(--muted); font-size: 0.95rem; }
+    main {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 1rem 1.25rem 2.5rem;
+      display: grid;
+      gap: 1rem;
+    }
+    .bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.6rem;
+      align-items: end;
+    }
+    label { display: block; font-size: 0.75rem; color: var(--muted); margin-bottom: 0.25rem; }
+    input {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      color: var(--ink);
+      border-radius: 8px;
+      padding: 0.5rem 0.65rem;
+      font: inherit;
+      width: 6rem;
+    }
+    a.btn, button {
+      display: inline-block;
+      background: var(--accent);
+      color: #042f2e;
+      border: 0;
+      border-radius: 8px;
+      padding: 0.55rem 0.9rem;
+      font: inherit;
+      font-weight: 600;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    a.btn.secondary, button.secondary {
+      background: transparent;
+      color: var(--accent);
+      border: 1px solid var(--accent-dim);
+    }
+    section {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 1rem 1.1rem;
+    }
+    section h2 {
+      margin: 0 0 0.75rem;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+    }
+    .spend-row {
+      display: grid;
+      grid-template-columns: 6.5rem 1fr 4.5rem;
+      gap: 0.6rem;
+      align-items: center;
+      margin-bottom: 0.55rem;
+      font-size: 0.9rem;
+    }
+    .track {
+      height: 0.55rem;
+      background: var(--line);
+      border-radius: 99px;
+      overflow: hidden;
+    }
+    .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+      border-radius: 99px;
+      width: 0%;
+    }
+    .amt { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
+    ul.list { list-style: none; margin: 0; padding: 0; }
+    ul.list li {
+      padding: 0.65rem 0;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 0.75rem;
+      font-size: 0.92rem;
+    }
+    ul.list li:last-child { border-bottom: 0; }
+    .meta { color: var(--muted); font-size: 0.8rem; }
+    .err { color: #fb7185; font-size: 0.9rem; }
+    .empty { color: var(--muted); font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Expense Analyzer</h1>
+    <p>Ledger, balances, and voice entry — amounts in ₹.</p>
+  </header>
+  <main>
+    <div class="bar">
+      <div>
+        <label for="userId">X-User-Id</label>
+        <input id="userId" type="number" value="1" min="1" />
+      </div>
+      <button type="button" id="btnRefresh">Refresh</button>
+      <a class="btn secondary" href="/static/voice.html">Voice entry</a>
+    </div>
+    <p id="error" class="err"></p>
+
+    <section>
+      <h2>Spend by category</h2>
+      <div id="chart" class="empty">Loading…</div>
+    </section>
+
+    <section>
+      <h2>Balances</h2>
+      <div id="balances" class="empty">Loading…</div>
+    </section>
+
+    <section>
+      <h2>Recent expenses</h2>
+      <ul id="expenses" class="list empty"><li>Loading…</li></ul>
+    </section>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const headers = () => ({ "X-User-Id": $("userId").value });
+    const rupees = (paise) => "₹" + (Number(paise) / 100).toLocaleString("en-IN", { maximumFractionDigits: 2 });
+
+    function showError(err) {
+      $("error").textContent = err ? String(err) : "";
+    }
+
+    async function api(path) {
+      const res = await fetch(path, { headers: headers() });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.detail || res.statusText);
+      return data;
+    }
+
+    async function load() {
+      showError("");
+      try {
+        const [spend, balances, expenses] = await Promise.all([
+          api("/analytics/spend-by-category"),
+          api("/balances"),
+          api("/expenses"),
+        ]);
+
+        const chart = $("chart");
+        if (!spend.length) {
+          chart.innerHTML = '<p class="empty">No spend yet — add an expense via voice.</p>';
+        } else {
+          const max = Math.max(...spend.map((s) => s.total_paise));
+          chart.innerHTML = spend.map((s) => {
+            const pct = max ? Math.round((s.total_paise / max) * 100) : 0;
+            return `<div class="spend-row">
+              <div>${s.category_name}</div>
+              <div class="track"><div class="fill" style="width:${pct}%"></div></div>
+              <div class="amt">${rupees(s.total_paise)}</div>
+            </div>`;
+          }).join("");
+        }
+
+        const bal = $("balances");
+        if (!balances.length) {
+          bal.innerHTML = '<p class="empty">No accepted friends / balances yet.</p>';
+        } else {
+          bal.innerHTML = '<ul class="list">' + balances.map((b) => {
+            const msg = b.net_paise > 0
+              ? `User ${b.user_id} owes you ${rupees(b.net_paise)}`
+              : b.net_paise < 0
+                ? `You owe user ${b.user_id} ${rupees(-b.net_paise)}`
+                : `Settled with user ${b.user_id}`;
+            return `<li><span>${msg}</span></li>`;
+          }).join("") + "</ul>";
+        }
+
+        const list = $("expenses");
+        if (!expenses.length) {
+          list.innerHTML = '<li class="empty">No expenses yet.</li>';
+        } else {
+          list.innerHTML = expenses.slice(0, 20).map((e) => `
+            <li>
+              <div>
+                <div>${e.description || "(no description)"}</div>
+                <div class="meta">${e.spent_on} · ${e.source} · cat #${e.category_id}</div>
+              </div>
+              <div>${rupees(e.amount_paise)}</div>
+            </li>`).join("");
+        }
+      } catch (e) {
+        showError(e.message || e);
+      }
+    }
+
+    $("btnRefresh").onclick = load;
+    $("userId").onchange = load;
+    load();
+  </script>
+</body>
+</html>
