@@ -1,3 +1,4 @@
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -5,6 +6,14 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     database_url: str = "postgresql+psycopg://expense:expense@localhost:5432/expense_analyzer"
+
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def normalize_db_scheme(cls, v: str) -> str:
+        # Railway's Postgres plugin exposes postgresql:// but psycopg3 needs postgresql+psycopg://
+        if isinstance(v, str) and v.startswith("postgresql://"):
+            return v.replace("postgresql://", "postgresql+psycopg://", 1)
+        return v
 
     # Sarvam Speech-to-Text (https://docs.sarvam.ai/api-reference/speech-to-text/transcribe)
     sarvam_api_key: str = ""
