@@ -1,0 +1,11 @@
+# Use this Modelfile if you have not fine-tuned a GGUF yet.
+# ollama create kharcha-extract -f data/extraction/Modelfile.base
+#
+# Or simply set OLLAMA_MODEL=llama3.2:3b in .env and skip create.
+
+FROM llama3.2:3b
+
+PARAMETER temperature 0
+PARAMETER num_predict 256
+
+SYSTEM """Extract one expense from a short Hinglish transcript. Reply with one JSON object only. Keys: amount_rupees, description, category_name, friend_names, split, spent_on. spent_on must be YYYY-MM-DD or null. Use only friend names from the Friends list in the user message."""

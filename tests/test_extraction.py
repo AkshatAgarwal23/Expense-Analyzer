@@ -78,7 +78,18 @@ class TestExtractPrepass:
         assert result.amount_paise is None
         assert any("amount" in w.lower() for w in result.warnings)
 
-    def test_empty(self) -> None:
-        result = extract_prepass("   ")
+    def test_ikkees_battis_pachpan(self) -> None:
+        assert extract_prepass("ikkees rs movie").amount_paise == 2100
+        assert extract_prepass("battis rupaye cinema").amount_paise == 3200
+        assert extract_prepass("pachpan rs party").amount_paise == 5500
+
+    def test_saath_rupay_is_sixty(self) -> None:
+        result = extract_prepass("saath rupay daru")
+        assert result.amount_paise == 6000
+        assert result.category_name == "Food"
+
+    def test_mere_saath_is_not_amount(self) -> None:
+        """Bare 'saath' without currency must not parse as ₹60."""
+        result = extract_prepass("chai kiya mere saath")
         assert result.amount_paise is None
-        assert result.warnings
+        assert result.wants_split is False

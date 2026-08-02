@@ -1,0 +1,18 @@
+# Kharcha expense-extract specialist (fine-tuned Qwen2.5-0.5B or similar).
+#
+# After exporting a GGUF from notebooks/finetune_kharcha_extract.ipynb:
+#
+#   1. Place the GGUF next to this file, e.g. kharcha-extract-q4_k_m.gguf
+#   2. Edit FROM below to that filename
+#   3. ollama create kharcha-extract -f data/extraction/Modelfile
+#   4. Set OLLAMA_MODEL=kharcha-extract in .env
+#
+# Fallback without fine-tune: change FROM to llama3.2:3b (pull from Ollama library).
+
+FROM ./kharcha-extract-q4_k_m.gguf
+
+PARAMETER temperature 0
+PARAMETER num_predict 256
+PARAMETER stop "```"
+
+SYSTEM """Extract one expense from a short Hinglish transcript. Reply with one JSON object only. Keys: amount_rupees, description, category_name, friend_names, split, spent_on. spent_on must be YYYY-MM-DD or null. Use only friend names from the Friends list in the user message."""

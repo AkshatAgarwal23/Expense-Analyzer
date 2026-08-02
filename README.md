@@ -83,3 +83,41 @@ pytest
 ```
 
 Unit/service tests mock Sarvam/Ollama and do not call real APIs.
+
+### Extraction corpus (text only)
+
+Labeled Hinglish transcripts live under `data/extraction/` (~1.8k). Used to measure **rules prepass** coverage (so fewer calls hit Ollama) and to fine-tune a small residual LLM.
+
+```bash
+# Regenerate corpus + train/eval split
+python -m scripts.generate_extraction_corpus
+
+# Prepass metrics (no Ollama): amount/category/split accuracy + LLM-skip rate
+python -m scripts.eval_extraction
+
+# Optional: live Ollama on residual rows (amount missed by rules)
+python -m scripts.eval_extraction --llm --llm-limit 20
+
+# Build chat JSONL for fine-tuning
+python -m scripts.prepare_llm_finetune
+```
+
+Fine-tune (Colab GPU): open [`notebooks/finetune_kharcha_extract.ipynb`](notebooks/finetune_kharcha_extract.ipynb), upload `finetune_chat.jsonl`, export GGUF into `data/extraction/`, then:
+
+```bash
+ollama create kharcha-extract -f data/extraction/Modelfile
+```
+
+**No local GPU?** Build a small few-shot specialist from `qwen2.5:1.5b` (faster residual path than `llama3.2:3b`):
+
+```bash
+ollama pull qwen2.5:1.5b
+python -m scripts.build_kharcha_modelfile
+ollama create kharcha-extract -f data/extraction/Modelfile.fewshot
+```
+
+Set `OLLAMA_MODEL=kharcha-extract` in `.env`. Compare latency:
+
+```bash
+python -m scripts.eval_extraction --no-prepass --llm-force --llm-limit 15
+```

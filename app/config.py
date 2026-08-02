@@ -16,7 +16,8 @@ class Settings(BaseSettings):
     sarvam_language_code: str = "unknown"
 
     ollama_base_url: str = "http://127.0.0.1:11434"
-    ollama_model: str = "llama3.2:3b"
+    # Prefer fine-tuned specialist; fall back to llama3.2:3b if not created yet
+    ollama_model: str = "kharcha-extract"
     # Skip Ollama when regex already found an amount (much faster)
     extraction_skip_llm_when_amount_found: bool = True
 

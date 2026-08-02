@@ -42,14 +42,25 @@ _ONES: dict[str, int] = {
     "atharah": 18,
     "unnees": 19,
     "bees": 20,
+    "ikkees": 21,
+    "ikkis": 21,
+    "battis": 32,
+    "batisis": 32,
     "tees": 30,
     "chalis": 40,
     "pachaas": 50,
     "pachas": 50,
+    "pachpan": 55,
+    "pachpann": 55,
     "sattar": 70,
     "assi": 80,
     "nabbe": 90,
-    # note: "saath" is 60 but also means "with" — only use with a scale word
+    # "saath" (60) also means "with" — parsed only with an explicit currency word
+}
+
+# Ambiguous: "saath" = 60 OR "with". Require rs/rupay/etc. so "mere saath" is not ₹60.
+_AMBIGUOUS_ONES: dict[str, int] = {
+    "saath": 60,
 }
 
 _SCALES: dict[str, int] = {
@@ -73,6 +84,13 @@ _SPOKEN_AMOUNT_RE = re.compile(
 _SPOKEN_ONES_RUPEE_RE = re.compile(
     r"\b(" + "|".join(re.escape(w) for w in sorted(_ONES, key=len, reverse=True)) + r")\b"
     r"\s*(?:rs\.?|rupees?|rupaye?|rupay|inr|ka)?\b",
+    re.IGNORECASE,
+)
+
+# "saath rs" / "saath rupay" = ₹60. Currency REQUIRED so "mere saath" is not an amount.
+_SAATH_RUPEE_RE = re.compile(
+    r"\b(" + "|".join(re.escape(w) for w in sorted(_AMBIGUOUS_ONES, key=len, reverse=True)) + r")\b"
+    r"\s*(?:rs\.?|rupees?|rupaye?|rupay|inr)\b",
     re.IGNORECASE,
 )
 
@@ -185,6 +203,14 @@ def _parse_spoken_rupees(text: str) -> tuple[int, str] | None:
                     return None
         return multiplier * scale, match.group(0).strip()
 
+    # "saath rs" / "saath rupay" — currency required (before optional-currency ones)
+    ambig = _SAATH_RUPEE_RE.search(text)
+    if ambig:
+        word = ambig.group(1).lower()
+        value = _AMBIGUOUS_ONES.get(word)
+        if value is not None:
+            return value, ambig.group(0).strip()
+
     # "pachaas rupay" / "bees rs" — tens/ones without a scale word
     ones_match = _SPOKEN_ONES_RUPEE_RE.search(text)
     if ones_match:
@@ -230,6 +256,7 @@ def extract_prepass(transcript: str) -> PrepassResult:
 
     cleaned = _AMOUNT_RE.sub(" ", text)
     cleaned = _SPOKEN_AMOUNT_RE.sub(" ", cleaned)
+    cleaned = _SAATH_RUPEE_RE.sub(" ", cleaned)
     cleaned = _SPOKEN_ONES_RUPEE_RE.sub(" ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip(" ,.-")
     if cleaned:

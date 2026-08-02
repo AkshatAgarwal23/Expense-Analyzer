@@ -19,6 +19,15 @@ htmlcov/
 # Environment
 .env
 
+# Fine-tune artifacts (large; keep scripts/corpus only)
+data/extraction/*.gguf
+data/extraction/kharcha-extract-*/
+data/extraction/finetune_chat.jsonl
+data/extraction/finetune_hard.jsonl
+kharcha-extract-checkpoints/
+kharcha-extract-merged/
+kharcha-extract-gguf/
+
 # IDE
 .idea/
 .vscode/
