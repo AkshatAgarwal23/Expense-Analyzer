@@ -6,6 +6,7 @@ WORKDIR /app
 COPY pyproject.toml .
 RUN pip install --no-cache-dir -e "."
 
+ARG CACHE_BUST=1
 COPY . .
 
 EXPOSE 8000
