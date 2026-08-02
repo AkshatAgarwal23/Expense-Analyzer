@@ -40,7 +40,7 @@ def create_friendship(
         )
     except DomainError as exc:
         raise _map_error(exc) from exc
-    return FriendshipRead.model_validate(friendship)
+    return friendship_service.to_friendship_read(db, friendship)
 
 
 @router.post("/{friendship_id}/accept", response_model=FriendshipRead)
@@ -55,7 +55,7 @@ def accept_friendship(
         )
     except DomainError as exc:
         raise _map_error(exc) from exc
-    return FriendshipRead.model_validate(friendship)
+    return friendship_service.to_friendship_read(db, friendship)
 
 
 @router.get("", response_model=list[FriendshipRead])
@@ -64,4 +64,4 @@ def list_friendships(
     caller_id: int = Depends(get_current_user_id),
 ) -> list[FriendshipRead]:
     friendships = friendship_service.list_friendships(db, caller_id=caller_id)
-    return [FriendshipRead.model_validate(f) for f in friendships]
+    return friendship_service.to_friendship_reads(db, friendships)

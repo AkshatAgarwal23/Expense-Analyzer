@@ -19,6 +19,8 @@ class FriendshipRead(BaseModel):
     id: int
     user_a_id: int
     user_b_id: int
+    user_a_display_name: str
+    user_b_display_name: str
     requested_by_id: int
     status: FriendshipStatusRead
     created_at: datetime

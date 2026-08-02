@@ -1,0 +1,17 @@
+{
+  "name": "Kharcha",
+  "short_name": "Kharcha",
+  "description": "Voice-first expense tracker with split and settle-up.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#E9F1EF",
+  "theme_color": "#3FBF7F",
+  "icons": [
+    {
+      "src": "/static/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

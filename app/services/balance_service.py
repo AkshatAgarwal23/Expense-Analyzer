@@ -2,7 +2,7 @@ from sqlalchemy import or_, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.core.balances import apply_settlement_delta, apply_share_delta
-from app.models import Expense, Friendship, FriendshipStatus, Settlement
+from app.models import Expense, Friendship, FriendshipStatus, Settlement, User
 from app.schemas.balances import BalanceRead
 
 
@@ -74,7 +74,16 @@ def get_balances(db: Session, *, caller_id: int) -> list[BalanceRead]:
             amount_paise=settlement.amount_paise,
         )
 
+    names: dict[int, str] = {}
+    if friend_ids:
+        for user in db.scalars(select(User).where(User.id.in_(friend_ids))).all():
+            names[user.id] = user.display_name
+
     return [
-        BalanceRead(user_id=uid, net_paise=nets[uid])
+        BalanceRead(
+            user_id=uid,
+            display_name=names.get(uid, f"User {uid}"),
+            net_paise=nets[uid],
+        )
         for uid in sorted(nets.keys())
     ]

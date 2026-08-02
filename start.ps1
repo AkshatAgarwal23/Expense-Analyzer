@@ -53,5 +53,6 @@ if (-not (Test-Path $uvicorn)) {
 }
 
 Write-Host "==> API  http://127.0.0.1:8001  (Ctrl+C to stop API only)" -ForegroundColor Cyan
-Write-Host "    Voice UI: http://127.0.0.1:8001/static/voice.html"
+Write-Host "    App UI:   http://127.0.0.1:8001/"
+Write-Host "    Voice UI: http://127.0.0.1:8001/static/kharcha-voice-record.html"
 & $uvicorn app.main:app --host 127.0.0.1 --port 8001 --reload

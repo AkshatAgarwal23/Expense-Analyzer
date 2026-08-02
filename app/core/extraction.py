@@ -69,8 +69,19 @@ _SPOKEN_AMOUNT_RE = re.compile(
     re.IGNORECASE,
 )
 
+# Bare spoken number near a rupee word: "pachaas rupay", "bees rs"
+_SPOKEN_ONES_RUPEE_RE = re.compile(
+    r"\b(" + "|".join(re.escape(w) for w in sorted(_ONES, key=len, reverse=True)) + r")\b"
+    r"\s*(?:rs\.?|rupees?|rupaye?|rupay|inr|ka)?\b",
+    re.IGNORECASE,
+)
+
+# Split intent: explicit words, or "X ke saath" / "with X" (not bare "saath",
+# which also means "together" / "60" and false-positives solo spends).
 _SPLIT_CUES = re.compile(
-    r"\b(split|saath|divide|share|baarabar|barabar|equal)\b",
+    r"\b(split|divide|share|baarabar|barabar|equal)\b"
+    r"|\bke\s+saath\b"
+    r"|\bwith\b",
     re.IGNORECASE,
 )
 
@@ -154,27 +165,35 @@ def rupees_to_paise(rupees: float) -> int:
 def _parse_spoken_rupees(text: str) -> tuple[int, str] | None:
     """Parse Hinglish amounts like 'das hazaar' → (10000, 'das hazaar')."""
     match = _SPOKEN_AMOUNT_RE.search(text)
-    if not match:
-        return None
+    if match:
+        if match.group(4):
+            # bare scale word → 1 * scale
+            scale = _SCALES[match.group(4).lower()]
+            return scale, match.group(0)
 
-    if match.group(4):
-        # bare scale word → 1 * scale
-        scale = _SCALES[match.group(4).lower()]
-        return scale, match.group(0)
-
-    scale = _SCALES[match.group(3).lower()]
-    if match.group(1):
-        multiplier = int(match.group(1))
-    else:
-        word = match.group(2).lower()
-        # "saath hazaar" = 60k; alone "saath" is not treated as amount here
-        if word == "saath":
-            multiplier = 60
+        scale = _SCALES[match.group(3).lower()]
+        if match.group(1):
+            multiplier = int(match.group(1))
         else:
-            multiplier = _ONES.get(word)
-            if multiplier is None:
-                return None
-    return multiplier * scale, match.group(0).strip()
+            word = match.group(2).lower()
+            # "saath hazaar" = 60k; alone "saath" is not treated as amount here
+            if word == "saath":
+                multiplier = 60
+            else:
+                multiplier = _ONES.get(word)
+                if multiplier is None:
+                    return None
+        return multiplier * scale, match.group(0).strip()
+
+    # "pachaas rupay" / "bees rs" — tens/ones without a scale word
+    ones_match = _SPOKEN_ONES_RUPEE_RE.search(text)
+    if ones_match:
+        word = ones_match.group(1).lower()
+        value = _ONES.get(word)
+        if value is not None:
+            return value, ones_match.group(0).strip()
+
+    return None
 
 
 def guess_category_name(text: str) -> str | None:
@@ -211,6 +230,7 @@ def extract_prepass(transcript: str) -> PrepassResult:
 
     cleaned = _AMOUNT_RE.sub(" ", text)
     cleaned = _SPOKEN_AMOUNT_RE.sub(" ", cleaned)
+    cleaned = _SPOKEN_ONES_RUPEE_RE.sub(" ", cleaned)
     cleaned = re.sub(r"\s+", " ", cleaned).strip(" ,.-")
     if cleaned:
         result.description_hint = cleaned[:200]

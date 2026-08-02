@@ -1,0 +1,487 @@
+/*
+  Kharcha design system tokens.
+  Import this file in all Kharcha screens.
+*/
+
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap");
+
+/* ─── Tokens ─────────────────────────────────────────────────────────────── */
+:root {
+  /* Canvas */
+  --canvas:       #E9F1EF;
+  --bloom-mist:   rgba(240, 246, 245, .95);
+  --bloom-aqua:   rgba(214, 232, 229, .90);
+  --bloom-brand:  rgba(63, 191, 127, .26);
+
+  /* Brand green — voice action only */
+  --brand:        #3FBF7F;
+  --brand-light:  #5FD79A;
+  --brand-deep:   #2FA76C;
+  --brand-ink:    #2E9E6A;
+  --brand-wordmark: #1B4A3A;
+
+  /* Ink */
+  --ink:          #122924;
+  --ink-body:     #16302B;
+  --ink-muted:    #5F7B75;
+  --ink-faint:    #4A6560;
+
+  /* Money semantics */
+  --owed-to-you:  #2A6B78;
+  --you-owe:      #9A6B54;
+
+  /* Categories — raw RGB triplets for rgba() usage */
+  --cat-food:      107, 112, 170;
+  --cat-rent:       70, 110, 140;
+  --cat-transport: 184, 132,  96;
+
+  /* Geometry */
+  --r-panel:      18px;
+  --r-control:    13px;
+  --r-pill:       999px;
+  --track:        rgba(18, 41, 36, .07);
+
+  /* Layout */
+  --sidebar-w:    200px;
+  --shell-max:    1240px;
+  --panel-pad:    20px 22px;
+  --gap:          18px;
+}
+
+/* ─── Reset ──────────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  font-family: "Inter", system-ui, sans-serif;
+  font-size: 15px;
+  font-weight: 400;
+  line-height: 1.5;
+  color: var(--ink-body);
+  background-color: var(--canvas);
+  min-height: 100dvh;
+}
+
+/* Fixed bloom layer — stays put as content scrolls */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 70% 55% at 0% 0%,    var(--bloom-mist),  transparent),
+    radial-gradient(ellipse 60% 50% at 100% 0%,  var(--bloom-aqua),  transparent),
+    radial-gradient(ellipse 50% 40% at 50% 100%, var(--bloom-brand), transparent);
+  background-attachment: fixed;
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* Everything sits above the bloom */
+body > * { position: relative; z-index: 1; }
+
+/* ─── Glass recipe ───────────────────────────────────────────────────────── */
+.glass {
+  background: linear-gradient(rgba(255,255,255,.80), rgba(255,255,255,.48));
+  border: 0.5px solid rgba(255,255,255,.85);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.95);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  border-radius: var(--r-panel);
+}
+
+/* ─── Typography scale ───────────────────────────────────────────────────── */
+.t-hero    { font-size: 46px; font-weight: 400; letter-spacing: -0.035em; line-height: 1; }
+.t-stat    { font-size: 19px; font-weight: 500; }
+.t-body    { font-size: 15px; font-weight: 400; }
+.t-label   { font-size: 14px; font-weight: 400; color: var(--ink-muted); }
+.t-chip    { font-size: 13px; font-weight: 400; }
+.t-money   { font-variant-numeric: tabular-nums; }
+
+/* ─── Wordmark ───────────────────────────────────────────────────────────── */
+.kharcha-wordmark {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--brand-wordmark);
+  letter-spacing: -0.02em;
+  text-decoration: none;
+}
+
+/* ─── Nav sidebar ────────────────────────────────────────────────────────── */
+.k-sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 24px 12px;
+}
+
+.k-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--r-control);
+  font-size: 14px;
+  color: var(--ink-muted);
+  text-decoration: none;
+  transition: background 140ms ease, color 140ms ease;
+  cursor: pointer;
+  border: none;
+  background: none;
+  font-family: inherit;
+  width: 100%;
+  text-align: left;
+}
+
+.k-nav-item:hover {
+  background: rgba(18, 41, 36, .06);
+  color: var(--ink-body);
+}
+
+.k-nav-item.active {
+  background: rgba(63, 191, 127, .12);
+  color: var(--brand-ink);
+  font-weight: 500;
+}
+
+.k-nav-item svg { flex-shrink: 0; }
+
+/* ─── Greeting row ───────────────────────────────────────────────────────── */
+.greeting-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+  min-width: 0;
+}
+
+.greeting-text {
+  font-size: 22px;
+  font-weight: 400;
+  color: var(--ink-body);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.identity-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px 6px 6px;
+  border-radius: var(--r-pill);
+  cursor: pointer;
+  flex-shrink: 0;
+  border: none;
+  font-family: inherit;
+  transition: background 140ms ease;
+}
+
+.identity-chip:hover { background: rgba(255,255,255,.6); }
+
+.identity-chip .initial {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(63, 191, 127, .18);
+  color: #25794F;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+.identity-chip .chip-name {
+  font-size: 14px;
+  color: var(--ink-body);
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.identity-chip .chevron {
+  color: var(--ink-muted);
+  margin-left: 2px;
+}
+
+/* ─── Shell ──────────────────────────────────────────────────────────────── */
+.k-shell {
+  max-width: var(--shell-max);
+  margin: 0 auto;
+  display: flex;
+  min-height: 100dvh;
+}
+
+.k-content {
+  flex: 1;
+  min-width: 0;
+  padding: 24px var(--gap) 160px; /* 160px bottom: room for the mic */
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+/* ─── Panels ─────────────────────────────────────────────────────────────── */
+.k-panel {
+  padding: var(--panel-pad);
+  border-radius: var(--r-panel);
+}
+
+.k-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--gap);
+}
+
+/* ─── Stat card ──────────────────────────────────────────────────────────── */
+.stat-card {
+  padding: 16px 18px;
+  border-radius: var(--r-control);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ─── Chip ───────────────────────────────────────────────────────────────── */
+.k-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: var(--r-pill);
+  font-size: 13px;
+  line-height: 1;
+}
+
+.chip-food      { background: rgba(var(--cat-food),      .16); color: #454A7A; }
+.chip-transport { background: rgba(var(--cat-transport), .18); color: #7E543F; }
+.chip-rent      { background: rgba(var(--cat-rent),      .16); color: #2E5A78; }
+.chip-default   { background: rgba(18,41,36,.07);              color: var(--ink-muted); }
+
+/* ─── Spend bar ──────────────────────────────────────────────────────────── */
+.spend-bar-row {
+  display: grid;
+  grid-template-columns: 90px 1fr 72px;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.bar-track {
+  height: 6px;
+  background: var(--track);
+  border-radius: var(--r-pill);
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  border-radius: var(--r-pill);
+  transition: width 500ms cubic-bezier(.25,.46,.45,.94);
+}
+
+.bar-fill-food      { background: linear-gradient(90deg, rgba(var(--cat-food),      .78), rgba(var(--cat-food),      .50)); }
+.bar-fill-transport { background: linear-gradient(90deg, rgba(var(--cat-transport), .78), rgba(var(--cat-transport), .50)); }
+.bar-fill-rent      { background: linear-gradient(90deg, rgba(var(--cat-rent),      .76), rgba(var(--cat-rent),      .48)); }
+.bar-fill-default   { background: linear-gradient(90deg, rgba(18,41,36,.22),             rgba(18,41,36,.12)); }
+
+/* ─── Money colors ───────────────────────────────────────────────────────── */
+.money-owed  { color: var(--owed-to-you); }
+.money-owing { color: var(--you-owe); }
+
+/* ─── List rows ──────────────────────────────────────────────────────────── */
+.k-list { list-style: none; margin: 0; padding: 0; }
+
+.k-list-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid rgba(18, 41, 36, .07);
+  font-size: 15px;
+}
+
+.k-list-row:last-child { border-bottom: none; }
+
+/* ─── Buttons ────────────────────────────────────────────────────────────── */
+.k-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 20px;
+  border-radius: var(--r-control);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: background 140ms ease, transform 100ms ease;
+  text-decoration: none;
+}
+
+.k-btn:active { transform: scale(.97); }
+
+.k-btn-primary {
+  background: var(--ink);
+  color: #fff;
+}
+
+.k-btn-primary:hover { background: var(--ink-body); }
+
+.k-btn-secondary {
+  background: rgba(18, 41, 36, .07);
+  color: var(--ink-body);
+}
+
+.k-btn-secondary:hover { background: rgba(18, 41, 36, .12); }
+
+/* ─── The Mic ────────────────────────────────────────────────────────────── */
+.mic-dock {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 28px;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.mic-btn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(160deg, var(--brand-light) 0%, var(--brand-deep) 100%);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,.30),
+    0 10px 28px rgba(47, 167, 108, .32);
+  pointer-events: all;
+  position: relative;
+  transition: transform 160ms ease;
+  animation: mic-pop 620ms cubic-bezier(.34,1.56,.64,1) 250ms both;
+}
+
+.mic-btn:hover  { transform: scale(1.05); }
+.mic-btn:active { transform: scale(.96); }
+
+.mic-btn:focus-visible {
+  outline: 3px solid var(--brand);
+  outline-offset: 4px;
+}
+
+/* Resting pulse ring */
+.mic-btn::after {
+  content: "";
+  position: absolute;
+  inset: -2px;
+  border-radius: 50%;
+  border: 1.5px solid var(--brand);
+  opacity: 0;
+  animation: mic-ring 3s ease-out 870ms infinite;
+}
+
+.mic-hint {
+  font-size: 12px;
+  color: var(--ink-muted);
+  pointer-events: all;
+  user-select: none;
+}
+
+/* ─── Animations ─────────────────────────────────────────────────────────── */
+@keyframes mic-pop {
+  from { opacity: 0; transform: scale(0); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+@keyframes mic-ring {
+  0%   { opacity: .55; transform: scale(1); }
+  100% { opacity: 0;   transform: scale(1.8); }
+}
+
+/* Skeleton shimmer */
+@keyframes shimmer {
+  from { background-position: -400px 0; }
+  to   { background-position:  400px 0; }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    rgba(18,41,36,.06) 0%,
+    rgba(18,41,36,.12) 50%,
+    rgba(18,41,36,.06) 100%
+  );
+  background-size: 800px 100%;
+  animation: shimmer 1.4s ease infinite;
+  border-radius: var(--r-control);
+}
+
+/* ─── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ─── Responsive: 860px breakpoint ──────────────────────────────────────── */
+@media (max-width: 860px) {
+  .greeting-text { font-size: 19px; }
+
+  .k-shell { flex-direction: column; }
+
+  .k-sidebar {
+    width: 100%;
+    flex-direction: row;
+    overflow-x: auto;
+    padding: 12px 16px;
+    gap: 6px;
+    border-bottom: 1px solid rgba(18,41,36,.08);
+    scrollbar-width: none;
+  }
+
+  .k-sidebar::-webkit-scrollbar { display: none; }
+
+  .k-nav-item {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+
+  .k-content { padding-left: 16px; padding-right: 16px; }
+}
+
+/* ─── Utility ────────────────────────────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px; height: 1px;
+  padding: 0; margin: -1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: var(--ink-muted);
+  font-size: 15px;
+}

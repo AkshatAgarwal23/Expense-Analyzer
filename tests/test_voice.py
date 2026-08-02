@@ -127,6 +127,40 @@ class TestExtractionService:
         assert set(result.draft.participant_ids) == {akshat.id, rahul.id}
         assert any("Ollama skipped" in w for w in result.draft.warnings)
 
+    def test_solo_chai_ignores_llm_invented_friend(
+        self, db: Session, seeded: tuple[User, User, int]
+    ) -> None:
+        """LLM often invents Rahul from the friends list — solo spend must stay solo."""
+        akshat, rahul, food_id = seeded
+        llm_json = """
+        {
+          "amount_rupees": 50,
+          "description": "chai",
+          "category_name": "Food",
+          "friend_names": ["Rahul"],
+          "split": true,
+          "spent_on": null
+        }
+        """
+        with patch(
+            "app.services.extraction_service._call_ollama", return_value=llm_json
+        ), patch(
+            "app.services.extraction_service.settings"
+        ) as mock_settings:
+            mock_settings.extraction_skip_llm_when_amount_found = False
+            mock_settings.ollama_base_url = "http://127.0.0.1:11434"
+            mock_settings.ollama_model = "llama3.2:3b"
+            result = extraction_service.extract_expense_draft(
+                db,
+                caller_id=akshat.id,
+                transcript="chai kiya, 50 rupay lagay",
+            )
+
+        assert result.draft.amount_paise == 5000
+        assert result.draft.participant_ids == [akshat.id]
+        assert rahul.id not in result.draft.participant_ids
+        assert result.draft.category_id == food_id
+
     def test_invalid_json_retries_then_fails(
         self, db: Session, seeded: tuple[User, User, int]
     ) -> None:

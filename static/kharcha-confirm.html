@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#3FBF7F" />
+  <link rel="manifest" href="/static/manifest.webmanifest" />
+  <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="/static/css/kharcha-design.css" />
+  <title>Confirm — Kharcha</title>
+  <style>
+    .confirm-shell {
+      min-height: 100dvh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .confirm-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 24px;
+      flex-shrink: 0;
+    }
+
+    .back-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 14px;
+      color: var(--ink-muted);
+      text-decoration: none;
+      padding: 8px 12px;
+      border-radius: var(--r-control);
+      transition: background 140ms ease, color 140ms ease;
+      border: none;
+      background: none;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    .back-btn:hover { background: rgba(18,41,36,.07); color: var(--ink-body); }
+
+    .step-label {
+      font-size: 13px;
+      color: var(--ink-muted);
+    }
+
+    /* Card centred on page */
+    .confirm-stage {
+      flex: 1;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 8px 20px 80px;
+    }
+
+    .confirm-card {
+      width: 100%;
+      max-width: 480px;
+      padding: 28px 26px 24px;
+    }
+
+    /* ── Amount hero ── */
+    .amount-row {
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+      margin-bottom: 20px;
+    }
+
+    .amount-symbol {
+      font-size: 28px;
+      font-weight: 400;
+      color: var(--ink-muted);
+      align-self: center;
+      line-height: 1;
+    }
+
+    .amount-hero {
+      font-size: 52px;
+      font-weight: 400;
+      letter-spacing: -0.04em;
+      color: var(--ink);
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+      /* Editable version */
+      border: none;
+      background: none;
+      font-family: inherit;
+      width: 100%;
+      min-width: 0;
+      outline: none;
+      padding: 0;
+    }
+
+    .amount-hero[readonly] { cursor: default; }
+
+    .amount-hero:not([readonly]):focus {
+      border-bottom: 2px solid var(--brand);
+    }
+
+    /* ── Meta row: category + date ── */
+    .meta-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .date-chip {
+      font-size: 13px;
+      color: var(--ink-muted);
+      padding: 4px 10px;
+      border-radius: var(--r-pill);
+      background: rgba(18,41,36,.06);
+    }
+
+    /* ── Description ── */
+    .desc-view {
+      font-size: 19px;
+      color: var(--ink-body);
+      margin-bottom: 20px;
+      line-height: 1.4;
+    }
+
+    .desc-input {
+      font-size: 19px;
+      color: var(--ink-body);
+      border: none;
+      border-bottom: 1.5px solid rgba(18,41,36,.15);
+      border-radius: 0;
+      background: none;
+      font-family: inherit;
+      width: 100%;
+      padding: 0 0 4px;
+      margin-bottom: 20px;
+      outline: none;
+    }
+
+    .desc-input:focus { border-bottom-color: var(--brand); }
+
+    /* ── Divider ── */
+    .divider {
+      height: 1px;
+      background: rgba(18,41,36,.08);
+      margin: 4px 0 18px;
+    }
+
+    /* ── Participants ── */
+    .participants-label {
+      font-size: 13px;
+      color: var(--ink-muted);
+      margin-bottom: 10px;
+    }
+
+    .participants-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .participant-chip {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      padding: 5px 12px 5px 5px;
+      border-radius: var(--r-pill);
+      background: rgba(18,41,36,.06);
+      font-size: 13px;
+      color: var(--ink-body);
+    }
+
+    .participant-initial {
+      width: 26px;
+      height: 26px;
+      border-radius: 50%;
+      background: rgba(63,191,127,.15);
+      color: #25794F;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      font-weight: 500;
+      flex-shrink: 0;
+    }
+
+    .split-note {
+      font-size: 13px;
+      color: var(--ink-muted);
+      margin-top: -10px;
+      margin-bottom: 20px;
+    }
+
+    /* ── Edit-mode fields (hidden in review) ── */
+    .edit-fields {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .edit-field-group { display: flex; flex-direction: column; gap: 4px; }
+
+    .field-label {
+      font-size: 12px;
+      color: var(--ink-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .field-input {
+      font-size: 14px;
+      color: var(--ink-body);
+      border: 1px solid rgba(18,41,36,.15);
+      border-radius: var(--r-control);
+      background: rgba(255,255,255,.6);
+      font-family: inherit;
+      padding: 9px 12px;
+      width: 100%;
+      outline: none;
+      transition: border-color 140ms ease;
+    }
+
+    .field-input:focus { border-color: var(--brand); }
+
+    /* ── Warnings ── */
+    .warnings-box {
+      padding: 10px 14px;
+      border-radius: var(--r-control);
+      background: rgba(154,107,84,.10);
+      border: 1px solid rgba(154,107,84,.22);
+      font-size: 13px;
+      color: #7a4f38;
+      margin-bottom: 18px;
+      line-height: 1.5;
+    }
+
+    /* ── Actions ── */
+    .action-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 4px;
+    }
+
+    .btn-save {
+      flex: 1;
+      padding: 14px 20px;
+      border-radius: var(--r-control);
+      background: var(--ink);
+      color: #fff;
+      border: none;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 140ms ease, transform 100ms ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+
+    .btn-save:hover   { background: var(--ink-body); }
+    .btn-save:active  { transform: scale(.98); }
+    .btn-save:disabled {
+      opacity: .55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .btn-edit {
+      padding: 14px 18px;
+      border-radius: var(--r-control);
+      background: rgba(18,41,36,.07);
+      color: var(--ink-body);
+      border: none;
+      font: inherit;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: background 140ms ease;
+      white-space: nowrap;
+    }
+
+    .btn-edit:hover { background: rgba(18,41,36,.12); }
+
+    /* ── Saved state ── */
+    .saved-card {
+      margin-top: 16px;
+      padding: 18px 20px;
+      border-radius: var(--r-panel);
+      background: rgba(42,107,120,.08);
+      border: 1px solid rgba(42,107,120,.20);
+      animation: slide-in 280ms cubic-bezier(.25,.46,.45,.94) both;
+    }
+
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    .saved-title {
+      font-size: 15px;
+      font-weight: 500;
+      color: var(--owed-to-you);
+      margin-bottom: 6px;
+    }
+
+    .saved-detail {
+      font-size: 13px;
+      color: var(--ink-muted);
+      line-height: 1.6;
+    }
+
+    .saved-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      margin-top: 14px;
+      font-size: 14px;
+      color: var(--ink-body);
+      text-decoration: none;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: var(--r-control);
+      background: rgba(18,41,36,.07);
+      transition: background 140ms ease;
+    }
+
+    .saved-link:hover { background: rgba(18,41,36,.12); }
+
+    /* ── Spinner ── */
+    .btn-spinner {
+      width: 16px;
+      height: 16px;
+      border-radius: 50%;
+      border: 2px solid rgba(255,255,255,.3);
+      border-top-color: #fff;
+      animation: spin 700ms linear infinite;
+      flex-shrink: 0;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Error ── */
+    .confirm-error {
+      margin-top: 12px;
+      padding: 10px 14px;
+      border-radius: var(--r-control);
+      background: rgba(180,35,24,.08);
+      border: 1px solid rgba(180,35,24,.18);
+      color: #7a1a11;
+      font-size: 13px;
+    }
+
+    [hidden] { display: none !important; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation: none !important; transition: none !important; }
+    }
+
+    @media (max-width: 540px) {
+      .confirm-card { padding: 22px 18px 20px; }
+      .amount-hero  { font-size: 42px; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="confirm-shell">
+
+  <div class="confirm-bar">
+    <button class="back-btn" id="backBtn">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+        <path d="M19 12H5M12 5l-7 7 7 7"/>
+      </svg>
+      Record again
+    </button>
+    <span class="step-label">Review &amp; confirm</span>
+  </div>
+
+  <div class="confirm-stage">
+    <div class="confirm-card glass">
+
+      <!-- Amount -->
+      <div class="amount-row">
+        <span class="amount-symbol">₹</span>
+        <input class="amount-hero" id="amountDisplay" type="text"
+               inputmode="decimal" readonly aria-label="Amount in rupees" />
+      </div>
+
+      <!-- Category + date -->
+      <div class="meta-row">
+        <span class="k-chip" id="categoryChip">—</span>
+        <span class="date-chip" id="dateChip">—</span>
+      </div>
+
+      <!-- Description -->
+      <div class="desc-view" id="descView"></div>
+      <input class="desc-input" id="descInput" type="text" hidden
+             placeholder="Description" aria-label="Description" />
+
+      <!-- Participants (hidden for solo / personal expenses) -->
+      <div id="splitSection">
+        <div class="divider"></div>
+        <p class="participants-label">Split between</p>
+        <div class="participants-row" id="participantsRow"></div>
+        <p class="split-note" id="splitNote"></p>
+      </div>
+
+      <!-- Warnings (hidden when none) -->
+      <div class="warnings-box" id="warningsBox" hidden></div>
+
+      <!-- Edit-mode extra fields (date, category, participants) -->
+      <div class="edit-fields" id="editFields" hidden>
+        <div class="edit-field-group">
+          <label class="field-label" for="editDate">Date</label>
+          <input class="field-input" id="editDate" type="date" />
+        </div>
+        <div class="edit-field-group">
+          <label class="field-label" for="editCategory">Category</label>
+          <select class="field-input" id="editCategory"></select>
+        </div>
+        <div class="edit-field-group">
+          <label class="field-label" for="editParticipants">Participant IDs (comma-separated)</label>
+          <input class="field-input" id="editParticipants" type="text" placeholder="1, 2" />
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="action-row" id="actionRow">
+        <button class="btn-edit" id="btnEdit">Edit</button>
+        <button class="btn-save" id="btnSave">Save expense</button>
+      </div>
+
+      <!-- Error -->
+      <div class="confirm-error" id="confirmError" hidden></div>
+
+      <!-- Saved confirmation -->
+      <div class="saved-card" id="savedCard" hidden>
+        <p class="saved-title">Expense saved</p>
+        <p class="saved-detail" id="savedDetail"></p>
+        <a class="saved-link" href="/">
+          Back to dashboard
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M5 12h14M12 5l7 7-7 7"/>
+          </svg>
+        </a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<input type="hidden" id="userId" value="1" />
+
+<script src="/static/js/api.js"></script>
+<script>
+  const { api, headers, rupees, toPaise, getUserId } = EA;
+
+  // ── Load draft from sessionStorage (or use preview fallback) ──────────────
+  let raw = null;
+  try { raw = JSON.parse(sessionStorage.getItem("kharcha_draft") || "null"); } catch {}
+
+  // Fallback data for when the page is opened directly (design preview)
+  const draft = raw?.draft ?? {
+    amount_paise: 40000,
+    category_id: 1,
+    description: "Dinner with Rahul",
+    spent_on: new Date().toISOString().slice(0, 10),
+    participant_ids: [1, 2],
+    warnings: ["Amount might be in dollars — please verify."],
+  };
+
+  const prepass = raw?.prepass ?? {};
+
+  // ── Name map: self + accepted/pending friends ─────────────────────────────
+  const nameById = {};
+
+  function displayName(id) {
+    return nameById[id] || ("User " + id);
+  }
+
+  function initialOf(name) {
+    return (name || "?").charAt(0).toUpperCase();
+  }
+
+  // ── Category map (loaded from API, fallback to id) ─────────────────────────
+  let categories = [];
+
+  function categoryName(id) {
+    const c = categories.find(c => c.id === id);
+    return c ? c.name : "Category " + id;
+  }
+
+  function categoryClass(name) {
+    const n = (name || "").toLowerCase();
+    if (n === "food")      return "chip-food";
+    if (n === "transport") return "chip-transport";
+    if (n === "rent")      return "chip-rent";
+    return "chip-default";
+  }
+
+  // ── Render review state ────────────────────────────────────────────────────
+  function renderReview() {
+    // Amount
+    const rupeesVal = (draft.amount_paise / 100).toFixed(2).replace(/\.00$/, "");
+    document.getElementById("amountDisplay").value = rupeesVal;
+
+    // Category chip
+    const name = categoryName(draft.category_id);
+    const chip = document.getElementById("categoryChip");
+    chip.textContent = name;
+    chip.className = "k-chip " + categoryClass(name);
+
+    // Date
+    document.getElementById("dateChip").textContent = draft.spent_on;
+
+    // Description
+    document.getElementById("descView").textContent = draft.description || "(no description)";
+
+    // Participants — hide whole split section for solo / personal expenses
+    const ids = draft.participant_ids || [];
+    const me = Number(getUserId());
+    const isSolo = ids.length <= 1;
+    const splitSection = document.getElementById("splitSection");
+    splitSection.hidden = isSolo;
+
+    if (!isSolo) {
+      const row = document.getElementById("participantsRow");
+      row.innerHTML = ids.map(id => {
+        const label = id === me ? (displayName(id) + " (you)") : displayName(id);
+        return `
+          <span class="participant-chip">
+            <span class="participant-initial">${initialOf(displayName(id))}</span>
+            ${label}
+          </span>`;
+      }).join("");
+
+      const share = rupees(Math.round(draft.amount_paise / ids.length));
+      document.getElementById("splitNote").textContent =
+        "Equal split — " + share + " each";
+    }
+
+    // Warnings
+    const wb = document.getElementById("warningsBox");
+    const warnings = draft.warnings || [];
+    if (warnings.length) {
+      wb.innerHTML = warnings.map(w => `<div>⚠ ${w}</div>`).join("");
+      wb.hidden = false;
+    } else {
+      wb.hidden = true;
+    }
+  }
+
+  // ── Edit / review toggle ───────────────────────────────────────────────────
+  let editing = false;
+
+  document.getElementById("btnEdit").onclick = () => {
+    editing = !editing;
+
+    const amountEl    = document.getElementById("amountDisplay");
+    const descView    = document.getElementById("descView");
+    const descInput   = document.getElementById("descInput");
+    const editFields  = document.getElementById("editFields");
+    const btnEdit     = document.getElementById("btnEdit");
+
+    if (editing) {
+      // Switch to edit mode
+      amountEl.readOnly = false;
+      amountEl.focus();
+
+      descView.hidden = true;
+      descInput.value = draft.description || "";
+      descInput.hidden = false;
+
+      document.getElementById("editDate").value = draft.spent_on;
+      document.getElementById("editParticipants").value =
+        (draft.participant_ids || []).join(", ");
+
+      editFields.hidden = false;
+      btnEdit.textContent = "Done";
+    } else {
+      // Apply edits back to draft
+      const raw = parseFloat(amountEl.value);
+      if (!isNaN(raw) && raw >= 0) draft.amount_paise = Math.round(raw * 100);
+      draft.description   = descInput.value.trim();
+      draft.spent_on      = document.getElementById("editDate").value;
+      draft.participant_ids = document.getElementById("editParticipants").value
+        .split(",").map(s => Number(s.trim())).filter(Boolean);
+
+      const selCat = document.getElementById("editCategory").value;
+      if (selCat) draft.category_id = Number(selCat);
+
+      amountEl.readOnly = true;
+      descView.hidden   = false;
+      descInput.hidden  = true;
+      editFields.hidden = true;
+      btnEdit.textContent = "Edit";
+
+      renderReview();
+    }
+  };
+
+  // ── Save ──────────────────────────────────────────────────────────────────
+  document.getElementById("btnSave").onclick = async () => {
+    const btnSave = document.getElementById("btnSave");
+    const errEl   = document.getElementById("confirmError");
+    errEl.hidden  = true;
+
+    // If still in edit mode, apply first
+    if (editing) document.getElementById("btnEdit").click();
+
+    btnSave.disabled = true;
+    btnSave.innerHTML = '<div class="btn-spinner"></div> Saving…';
+
+    try {
+      const body = {
+        amount_paise:    draft.amount_paise,
+        category_id:     draft.category_id,
+        description:     draft.description,
+        spent_on:        draft.spent_on,
+        participant_ids: draft.participant_ids,
+        split_mode:      "equal",
+        source:          "voice",
+      };
+
+      await api("/voice/confirm", {
+        method: "POST",
+        headers: headers({ "Content-Type": "application/json" }),
+        body: JSON.stringify(body),
+      });
+
+      // Success
+      btnSave.textContent = "Expense saved";
+      btnSave.disabled = true;
+      document.getElementById("btnEdit").hidden = true;
+
+      const ids   = draft.participant_ids || [];
+      const share = ids.length > 1
+        ? " — " + rupees(Math.round(draft.amount_paise / ids.length)) + " each"
+        : "";
+      document.getElementById("savedDetail").textContent =
+        rupees(draft.amount_paise) + " · " + categoryName(draft.category_id) + share;
+      document.getElementById("savedCard").hidden = false;
+
+      sessionStorage.removeItem("kharcha_draft");
+    } catch (e) {
+      btnSave.disabled = false;
+      btnSave.textContent = "Save expense";
+      errEl.textContent = e.message || "Save failed. Check your connection and try again.";
+      errEl.hidden = false;
+    }
+  };
+
+  // ── Back button ─────────────────────────────────────────────────────────────
+  document.getElementById("backBtn").onclick = () => {
+    history.length > 1
+      ? history.back()
+      : (window.location.href = "/static/kharcha-voice-record.html");
+  };
+
+  // ── Load categories + names, then render ──────────────────────────────────
+  (async () => {
+    try {
+      const [cats, me, friendships] = await Promise.all([
+        api("/categories", { headers: headers() }),
+        api("/me", { headers: headers() }),
+        api("/friendships", { headers: headers() }),
+      ]);
+      categories = cats;
+      nameById[me.id] = me.display_name;
+      friendships.forEach(f => {
+        nameById[f.user_a_id] = f.user_a_display_name;
+        nameById[f.user_b_id] = f.user_b_display_name;
+      });
+      document.getElementById("editCategory").innerHTML =
+        categories.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+      document.getElementById("editCategory").value = String(draft.category_id);
+    } catch {
+      // Non-fatal; names fall back to "User N", categories to "Category N"
+      try {
+        categories = await api("/categories", { headers: headers() });
+        document.getElementById("editCategory").innerHTML =
+          categories.map(c => `<option value="${c.id}">${c.name}</option>`).join("");
+        document.getElementById("editCategory").value = String(draft.category_id);
+      } catch { /* ignore */ }
+    }
+    renderReview();
+  })();
+</script>
+</body>
+</html>

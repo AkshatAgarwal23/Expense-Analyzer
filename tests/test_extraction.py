@@ -25,6 +25,28 @@ class TestExtractPrepass:
         assert result.category_name == "Transport"
         assert result.wants_split is True
 
+    def test_chai_solo_no_split(self) -> None:
+        """Solo chai spend must not trip split cues."""
+        result = extract_prepass("chai kiya, 50 rupay lagay")
+        assert result.amount_paise == 5000
+        assert result.wants_split is False
+        assert result.category_name == "Food"
+
+    def test_pachaas_rupay_spoken(self) -> None:
+        result = extract_prepass("chai kiya pachaas rupay lagay")
+        assert result.amount_paise == 5000
+        assert result.wants_split is False
+
+    def test_bare_saath_is_not_split(self) -> None:
+        """Bare 'saath' (together/60) must not mark a split — need 'ke saath'."""
+        result = extract_prepass("chai kiya 50 rupay mere saath")
+        assert result.wants_split is False
+
+    def test_ke_saath_is_split(self) -> None:
+        result = extract_prepass("dinner 400 Rahul ke saath")
+        assert result.wants_split is True
+        assert result.amount_paise == 40000
+
     def test_swiggy_food(self) -> None:
         result = extract_prepass("800 swiggy order")
         assert result.category_name == "Food"

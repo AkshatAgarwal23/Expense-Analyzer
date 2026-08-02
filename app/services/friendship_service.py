@@ -3,6 +3,7 @@ from sqlalchemy.orm import Session
 
 from app.core.friendships import ordered_pair
 from app.models import Friendship, FriendshipStatus, User
+from app.schemas.friendships import FriendshipRead
 from app.services.errors import ConflictError, ForbiddenError, NotFoundError, ValidationError
 
 
@@ -89,3 +90,44 @@ def require_accepted_friendship(
     if friendship is None:
         raise ValidationError("Users must be accepted friends")
     return friendship
+
+
+def to_friendship_read(
+    db: Session, friendship: Friendship, *, names: dict[int, str] | None = None
+) -> FriendshipRead:
+    """Serialize a friendship with both parties' display names."""
+    if names is None:
+        users = db.scalars(
+            select(User).where(
+                User.id.in_((friendship.user_a_id, friendship.user_b_id))
+            )
+        ).all()
+        names = {u.id: u.display_name for u in users}
+
+    return FriendshipRead(
+        id=friendship.id,
+        user_a_id=friendship.user_a_id,
+        user_b_id=friendship.user_b_id,
+        user_a_display_name=names.get(
+            friendship.user_a_id, f"User {friendship.user_a_id}"
+        ),
+        user_b_display_name=names.get(
+            friendship.user_b_id, f"User {friendship.user_b_id}"
+        ),
+        requested_by_id=friendship.requested_by_id,
+        status=friendship.status,  # type: ignore[arg-type]
+        created_at=friendship.created_at,
+    )
+
+
+def to_friendship_reads(
+    db: Session, friendships: list[Friendship]
+) -> list[FriendshipRead]:
+    if not friendships:
+        return []
+    user_ids = {f.user_a_id for f in friendships} | {f.user_b_id for f in friendships}
+    names = {
+        u.id: u.display_name
+        for u in db.scalars(select(User).where(User.id.in_(user_ids))).all()
+    }
+    return [to_friendship_read(db, f, names=names) for f in friendships]

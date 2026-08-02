@@ -37,6 +37,7 @@ Send `X-User-Id: <seeded user id>` on every protected request. Seed prints IDs (
 
 | Method | Path | Purpose |
 |--------|------|---------|
+| GET | `/me` | Current user (`display_name`, email) via `X-User-Id` |
 | GET | `/health` | Liveness |
 | POST/GET | `/expenses` | Create (equal/exact/percentage) and list |
 | POST/GET | `/friendships` | Request friendship; list |
@@ -51,10 +52,13 @@ Send `X-User-Id: <seeded user id>` on every protected request. Seed prints IDs (
 
 Money is always integer **paise**. Positive `net_paise` means they owe you.
 
-### App UI
+### App UI (Kharcha)
 
-- Dashboard (spend chart, balances, recent expenses): http://127.0.0.1:8001/static/index.html  
-- Voice entry: http://127.0.0.1:8001/static/voice.html  
+- Dashboard: http://127.0.0.1:8001/  
+- Friends / settle: http://127.0.0.1:8001/static/kharcha-friends.html  
+- Voice entry (record → draft → confirm): http://127.0.0.1:8001/static/kharcha-voice-record.html  
+- Confirm draft: http://127.0.0.1:8001/static/kharcha-confirm.html  
+- PWA manifest: `/static/manifest.webmanifest` (installable from the browser)  
 
 ### Voice / Sarvam
 
@@ -62,7 +66,7 @@ Money is always integer **paise**. Positive `net_paise` means they owe you.
 - Default model `saaras:v3`, mode **`translit`** (romanized Hinglish) so amount/friend regex works
 - Set `SARVAM_MODE=codemix` if you prefer mixed Devanagari + English
 
-Demo UI: http://127.0.0.1:8001/static/voice.html
+Demo UI: http://127.0.0.1:8001/
 
 ### Voice curl (skip mic)
 

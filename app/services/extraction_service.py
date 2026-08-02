@@ -200,23 +200,32 @@ def _resolve_draft(
 
     description = (llm.description or prepass.description_hint or transcript).strip()
 
+    # Friends: rules first. Only names that actually appear in the transcript.
+    # Ollama is given the friends list as context and often invents a split partner
+    # (e.g. Rahul) for solo spends like "chai kiya 50 rupay" — ignore those.
     participant_ids = [caller_id]
-    for name in llm.friend_names:
-        key = name.strip().lower()
-        if key in friends:
-            fid = friends[key]
-            if fid not in participant_ids:
-                participant_ids.append(fid)
-        else:
-            warnings.append(f"Unknown friend name {name!r} ignored")
-
-    # Scan transcript for friend display names (rules assist / replace LLM).
     lower_transcript = transcript.lower()
     for name, fid in friends.items():
-        if name in lower_transcript and fid not in participant_ids:
+        if re.search(rf"\b{re.escape(name)}\b", lower_transcript) and fid not in participant_ids:
             participant_ids.append(fid)
 
-    wants_split = prepass.wants_split or llm.split or len(participant_ids) > 1
+    # LLM friend_names only count when that name is also in the transcript
+    # (helps with capitalization / slight model wording, not invention).
+    for name in llm.friend_names:
+        key = name.strip().lower()
+        if key not in friends:
+            warnings.append(f"Unknown friend name {name!r} ignored")
+            continue
+        if not re.search(rf"\b{re.escape(key)}\b", lower_transcript):
+            warnings.append(f"Friend {name!r} not in transcript — ignored")
+            continue
+        fid = friends[key]
+        if fid not in participant_ids:
+            participant_ids.append(fid)
+
+    # Split if cues say so, or a friend was named in the transcript.
+    # Ignore bare llm.split=true with no named friends — models invent splits.
+    wants_split = prepass.wants_split or len(participant_ids) > 1
     if not wants_split:
         participant_ids = [caller_id]
 
