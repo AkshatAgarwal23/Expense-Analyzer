@@ -1,0 +1,20 @@
+FROM ollama/ollama:latest
+
+# Copy the few-shot Modelfile (uses qwen2.5:1.5b — no GGUF needed)
+COPY data/extraction/Modelfile.fewshot /Modelfile.fewshot
+
+# Pull the base model and create the kharcha-extract specialist at build time.
+# We start the daemon in the background, wait for it, pull, create, then stop.
+# The model files end up in /root/.ollama and are baked into this layer.
+RUN ollama serve & \
+    OLLAMA_PID=$! && \
+    echo "Waiting for ollama daemon..." && \
+    sleep 15 && \
+    ollama pull qwen2.5:1.5b && \
+    ollama create kharcha-extract -f /Modelfile.fewshot && \
+    kill $OLLAMA_PID && \
+    echo "Model baked in."
+
+EXPOSE 11434
+
+CMD ["ollama", "serve"]

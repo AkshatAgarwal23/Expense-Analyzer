@@ -15,5 +15,15 @@ services:
       timeout: 5s
       retries: 5
 
+  ollama:
+    build:
+      context: .
+      dockerfile: Dockerfile.ollama
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollamadata:/root/.ollama
+
 volumes:
   pgdata:
+  ollamadata:
